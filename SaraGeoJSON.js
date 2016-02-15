@@ -11,16 +11,30 @@ var CartoDBTiles = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{
 // add these tiles to our map
 map.addLayer(CartoDBTiles);
 
+// add other basemaps:
+// add in OSM Mapnik tiles
+var OSMMapnikTiles = L.tileLayer('http://{s}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png',{
+  attribution: 'Map Data and Tiles &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> Contributors'
+});
+// do not add to the map just yet, but add varible to the layer switcher control 
+
+// add in MapQuest Open Aerial layer
+var MapQuestAerialTiles = L.tileLayer('http://otile1.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.png',{
+  attribution: 'Tiles Courtesy of <a href="http://www.mapquest.com/" target="_blank">MapQuest</a> <img src="http://developer.mapquest.com/content/osm/mq_logo.png">'
+});
+
 
 // create global variables we can use for layer controls
 var subwayLinesGeoJSON;
-var neighborhoodsGeoJSON;
+//var neighborhoodsGeoJSON;
 var floodZonesGeoJSON; 
 var wifispotsGeoJSON;
 
-/*
+addSubwayLines();
+
 // use jQuery get geoJSON to grab geoJson layer, parse it, then plot it on the map using the plotDataset function
 // let's add the subway lines
+function addSubwayLines() {
 $.getJSON( "geoJSON/MTA_subway_lines.geojson", function( data ) {
     // ensure jQuery has pulled all data out of the geojson file
     var subwayLines = data;
@@ -34,7 +48,6 @@ $.getJSON( "geoJSON/MTA_subway_lines.geojson", function( data ) {
 
     // function that binds popup data to subway lines
     var subwayClick = function (feature, layer) {
-        console.log(layer);
         // let's bind some feature properties to a pop up
         layer.bindPopup(feature.properties.Line);
     }
@@ -43,12 +56,14 @@ $.getJSON( "geoJSON/MTA_subway_lines.geojson", function( data ) {
     subwayLinesGeoJSON = L.geoJson(subwayLines, {
         style: subwayStyle,
         onEachFeature: subwayClick
-    }).addTo(map);
+    });
 
+      addfloodZones();
 });
 
-*/
+}
 
+function addfloodZones() {
 // add flood zone data
 $.getJSON( "geoJSON/HurricaneEvacuationZones.geojson", function( data ) {
     // ensure jQuery has pulled all data out of the geojson file
@@ -61,6 +76,7 @@ $.getJSON( "geoJSON/HurricaneEvacuationZones.geojson", function( data ) {
 
         var value = feature.properties.hurricane_;
         var fillColor = null;
+        var fillOpacity = .08;
         }
         if(value == 1){
             fillColor = "#034e7b";
@@ -77,31 +93,29 @@ $.getJSON( "geoJSON/HurricaneEvacuationZones.geojson", function( data ) {
         if(value == 5) { 
             fillColor = "#a6bddb";
         }
-        if(value == 6) { 
+        if(value == 6){ 
             fillColor = "#d0d1e6";
         }
-         if(value == 7) { 
+         if(value == 7){ 
             fillColor = "#000000";
-            //f1eef6
         }
-         if(value === "X") { 
-            fillColor = "#000";
-            //#7CBF2F
+         if(value === "X"){ 
+            fillColor = "#000",
+            fillOpacity = .0;
         }
 // this var style = is for all the other styled aspects of each zone polygon
         var style = {
             weight: 2,
             opacity: .1,
             color: 'white',
-            fillOpacity: 0.8,
+            fillOpacity: fillOpacity,
             fillColor: fillColor
         };
-// return --this is needed for 
+// return --this is needed to make function show up on screen 
         return style;
     }
 
     var zoneClick = function (feature, layer) {
-        //percent created with * 100
         var zone = feature.properties.hurricane_;
         // toFixed(0) cuts out everything after 0, toFixed(1) will print one decimal
         // let's bind some feature properties to a pop up
@@ -112,38 +126,47 @@ $.getJSON( "geoJSON/HurricaneEvacuationZones.geojson", function( data ) {
     HurricaneEvacuationZonesGeoJSON = L.geoJson(floodZones, {
         style: floodStyle,
         onEachFeature: zoneClick
-    }).addTo(map);
-});
+    });
+
+        addWifiSpots();
+    });
+
+}
 
 
+function addWifiSpots() {
 // add wifi data
 $.getJSON( "geoJSON/NYCWi-FiHotspots.geojson", function( data ) {
     // ensure jQuery has pulled all data out of the geojson file
-    var wifispots = data;
-        // wifispots dots
-    var wifispotsPointToLayer = function (feature, latlng){
-        var wifispotsMarker = L.circle(latlng, 100, {
+    var wifispot = data;
+        // wifispot dots
+    var wifispotPointToLayer = function (feature, latlng){
+        var wifispotMarker = L.circle(latlng, 100, {
             stroke: false,
             fillColor: '#2ca25f',
             fillOpacity: 1
         });
         
-        return wifispotsMarker;  
+        return wifispotMarker;  
     }
 
     var wifispotsClick = function (feature, layer) {
-        // let's bind some feature properties to a pop up
-        layer.bindPopup("<strong>Name:</strong> " + feature.properties.BUSINESS_N + "<br /><strong>Address:</strong> " + feature.properties.ADDRESS);
+        // let's bind some feature properties to a pop up: why is location red?
+        layer.bindPopup(feature.properties.location + feature.properties.provider);
     }
 
     wifispotsGeoJSON = L.geoJson(wifispots, {
         pointToLayer: wifispotsPointToLayer,
         onEachFeature: wifispotsClick
-    }).addTo(map);
-});
+    });
 
-/*
-// let's add neighborhood data
+ /*
+    addNeighborhoodData();
+  });
+}
+
+// let's add neighborhood data and show population density
+function addNeighborhoodData(); {
 $.getJSON( "geojson/NYC_neighborhood_data.geojson", function( data ) {
     // ensure jQuery has pulled all data out of the geojson file
     var neighborhoods = data;
@@ -151,9 +174,9 @@ $.getJSON( "geojson/NYC_neighborhood_data.geojson", function( data ) {
 //this is a loop
     // neighborhood choropleth map
     // let's use % in poverty to color the neighborhood map
-    var povertyStyle = function (feature){
+    var populationStyle = function (feature){
 
-        var value = feature.properties.PovertyPer;
+        var value = feature.properties.Pop;
         var fillColor = null;
         if(value >= 0 && value <=0.1){
             fillColor = "#fee5d9";
@@ -182,29 +205,40 @@ $.getJSON( "geojson/NYC_neighborhood_data.geojson", function( data ) {
             fillOpacity: 0.75,
             fillColor: fillColor
         };
-// return --this is needed for 
+// return --this tells computer to display style
         return style;
     }
 
-    var povertyClick = function (feature, layer) {
-        //percent created with * 100
-        var percent = feature.properties.PovertyPer * 100;
-        // toFixed(0) cuts out everything after 0, toFixed(1) will print one decimal
-        percent = percent.toFixed(0);
+    var populationClick = function (feature, layer) {
         // let's bind some feature properties to a pop up
-        layer.bindPopup("<strong>Neighborhood:</strong> " + feature.properties.NYC_NEIG + "<br /><strong>Percent in Poverty: </strong>" + percent + "%");
+        layer.bindPopup("<strong>Neighborhood:</strong> " + feature.properties.NYC_NEIG + "<br /><strong>Population</strong>" + percent + "%");
     }
 //This is a loop below: We've used one for each layer
     neighborhoodsGeoJSON = L.geoJson(neighborhoods, {
         style: povertyStyle,
-        onEachFeature: povertyClick
-    }).addTo(map);
+        onEachFeature: populationClick
+     */ 
+    });
+
+     // now lets add the data to the map in the order that we want it to appear
+        // flood zones first
+        floodZonesGeoJSON.addTo(map);
+
+        // neighborhoods: leave this off for now
+       // neighborhoodsGeoJSON.addTo(map);
+
+        // subway lines next
+        subwayLinesGeoJSON.addTo(map);
+
+        // the wifi spots last
+        wifispotsGeoJSON.addTo(map);
 
 
-    // create layer controls
-    createLayerControls(); 
+        // now create the layer controls!
+        createLayerControls(); 
 
-});
+    });
+}
 
 
 function createLayerControls(){
@@ -212,12 +246,15 @@ function createLayerControls(){
     // add in layer controls
     var baseMaps = {
         "CartoDB": CartoDBTiles,
+        "OSM Mapnik": OSMMapnikTiles,
+        "Mapquest Aerial": MapQuestAerialTiles
     };
 
     var overlayMaps = {
-        "Pawn Shops": pawnShopsGeoJSON,
+       // "Neighborhood Population": neighborhoodsGeoJSON,
+        "Hurricane Evacuation Zones": floodZonesGeoJSON,
         "Subway Lines": subwayLinesGeoJSON,
-        "Povery Map": neighborhoodsGeoJSON
+        "Wifi Spots": wifispotsGeoJSON
     };
 
     // add control
@@ -225,8 +262,12 @@ function createLayerControls(){
 
 }
 
+
+
+/*
+var subwayLinesGeoJSON;
+//var neighborhoodsGeoJSON;
+var floodZonesGeoJSON; 
+var wifispotsGeoJSON;
 */
-
-
-
 
