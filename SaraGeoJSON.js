@@ -26,150 +26,146 @@ var MapQuestAerialTiles = L.tileLayer('http://otile1.mqcdn.com/tiles/1.0.0/sat/{
 
 // create global variables we can use for layer controls
 var subwayLinesGeoJSON;
-//var neighborhoodsGeoJSON;
+var neighborhoodDataGeoJSON;
 var floodZonesGeoJSON; 
-var wifispotsGeoJSON;
+var wifiSpotsGeoJSON;
 
 addSubwayLines();
 
 // use jQuery get geoJSON to grab geoJson layer, parse it, then plot it on the map using the plotDataset function
 // let's add the subway lines
 function addSubwayLines() {
-$.getJSON( "geoJSON/MTA_subway_lines.geojson", function( data ) {
-    // ensure jQuery has pulled all data out of the geojson file
-    var subwayLines = data;
+    $.getJSON( "geoJSON/MTA_subway_lines.geojson", function( data ) {
+        // ensure jQuery has pulled all data out of the geojson file
+        var subwayLines = data;
 
-    // style for subway lines
-    var subwayStyle = {
-        "color": "#a5a5a5",
-        "weight": 2,
-        "opacity": 0.80
-    };
+        // style for subway lines
+        var subwayStyle = {
+            "color": "#8c8c8c",
+            "weight": 2,
+            "opacity": 0.80
+        };
 
-    // function that binds popup data to subway lines
-    var subwayClick = function (feature, layer) {
-        // let's bind some feature properties to a pop up
-        layer.bindPopup(feature.properties.Line);
-    }
+        // function that binds popup data to subway lines
+        var subwayClick = function (feature, layer) {
+            // let's bind some feature properties to a pop up
+            layer.bindPopup(feature.properties.Line);
+        }
 
-    // using L.geojson add subway lines to map
-    subwayLinesGeoJSON = L.geoJson(subwayLines, {
-        style: subwayStyle,
-        onEachFeature: subwayClick
+        // using L.geojson add subway lines to map
+        subwayLinesGeoJSON = L.geoJson(subwayLines, {
+            style: subwayStyle,
+            onEachFeature: subwayClick
+        });
+
+          addfloodZones();
     });
-
-      addfloodZones();
-});
 
 }
 
 function addfloodZones() {
-// add flood zone data
-$.getJSON( "geoJSON/HurricaneEvacuationZones.geojson", function( data ) {
-    // ensure jQuery has pulled all data out of the geojson file
-    var floodZones = data;
+    // add flood zone data
+    $.getJSON( "geoJSON/HurricaneEvacuationZones.geojson", function( data ) {
+        // ensure jQuery has pulled all data out of the geojson file
+        var floodZones = data;
 
-//CHORLOPLETH 
-//this is a loop
-    // flood zone choropleth map
-    var floodStyle = function (feature){
+    //CHORLOPLETH 
+    //this is a loop
+        // flood zone choropleth map
+        var floodStyle = function (feature){
 
-        var value = feature.properties.hurricane_;
-        var fillColor = null;
-        var fillOpacity = .08;
+            var value = feature.properties.hurricane_;
+            var fillColor = null;
+            var fillOpacity = 0.8;
+            
+            if(value == 1){
+                fillColor = "#034e7b";
+            }
+            if(value == 2){
+                fillColor = "#0570b0";
+            }
+            if(value == 3){
+                fillColor = "#3690c0";
+            }
+            if(value == 4){
+                fillColor = "#74a9cf";
+            }
+            if(value == 5) { 
+                fillColor = "#a6bddb";
+            }
+            if(value == 6){ 
+                fillColor = "#d0d1e6";
+            }
+             if(value == 7){ 
+                fillColor = "#000000";
+            }
+             if(value === "X"){ 
+                fillColor = "#000",
+                fillOpacity = 0;
+            }
+    // this var style = is for all the other styled aspects of each zone polygon
+            var style = {
+                weight: 1,
+                opacity: 0.8,
+                color: 'white',
+                fillOpacity: fillOpacity,
+                fillColor: fillColor
+            };
+    // return --this is needed to make function show up on screen 
+            return style;
         }
-        if(value == 1){
-            fillColor = "#034e7b";
+
+        var zoneClick = function (feature, layer) {
+            var zone = feature.properties.hurricane_;
+            // toFixed(0) cuts out everything after 0, toFixed(1) will print one decimal
+            // let's bind some feature properties to a pop up
+            layer.bindPopup("<stront>Hurricane Evacuation Zone: </strong>" + feature.properties.hurricane_);
         }
-        if(value == 2){
-            fillColor = "#0570b0";
-        }
-        if(value == 3){
-            fillColor = "#3690c0";
-        }
-        if(value == 4){
-            fillColor = "#74a9cf";
-        }
-        if(value == 5) { 
-            fillColor = "#a6bddb";
-        }
-        if(value == 6){ 
-            fillColor = "#d0d1e6";
-        }
-         if(value == 7){ 
-            fillColor = "#000000";
-        }
-         if(value === "X"){ 
-            fillColor = "#000",
-            fillOpacity = .0;
-        }
-// this var style = is for all the other styled aspects of each zone polygon
-        var style = {
-            weight: 2,
-            opacity: .1,
-            color: 'white',
-            fillOpacity: fillOpacity,
-            fillColor: fillColor
-        };
-// return --this is needed to make function show up on screen 
-        return style;
+
+    //for layer switcher
+        floodZonesGeoJSON = L.geoJson(floodZones, {
+            style: floodStyle,
+            onEachFeature: zoneClick
+        });
+
+            addwifiSpots();
+        });
+
     }
 
-    var zoneClick = function (feature, layer) {
-        var zone = feature.properties.hurricane_;
-        // toFixed(0) cuts out everything after 0, toFixed(1) will print one decimal
-        // let's bind some feature properties to a pop up
-        layer.bindPopup("<stront>Hurricane Evacuation Zone: </strong>" + feature.properties.hurricane_);
-    }
-//This is a loop below: We've used one for each layer
-//for layer switcher
-    HurricaneEvacuationZonesGeoJSON = L.geoJson(floodZones, {
-        style: floodStyle,
-        onEachFeature: zoneClick
-    });
 
-        addWifiSpots();
-    });
-
-}
-
-
-function addWifiSpots() {
-// add wifi data
+function addwifiSpots() {
 $.getJSON( "geoJSON/NYCWi-FiHotspots.geojson", function( data ) {
-    // ensure jQuery has pulled all data out of the geojson file
-    var wifispot = data;
-        // wifispot dots
-    var wifispotPointToLayer = function (feature, latlng){
-        var wifispotMarker = L.circle(latlng, 100, {
+    var wifiSpots = data;
+    
+    var wifiSpotPointToLayer = function (feature, latlng){
+        var wifiSpotMarker = L.circle(latlng, 100, {
             stroke: false,
             fillColor: '#2ca25f',
-            fillOpacity: 1
+            fillOpacity: .7
         });
         
-        return wifispotMarker;  
+        return wifiSpotMarker;  
     }
 
-    var wifispotsClick = function (feature, layer) {
-        // let's bind some feature properties to a pop up: why is location red?
-        layer.bindPopup(feature.properties.location + feature.properties.provider);
+    var wifiSpotsClick = function (feature, layer) {
+        layer.bindPopup(feature.properties.location + ", " + feature.properties.provider);
     }
-
-    wifispotsGeoJSON = L.geoJson(wifispots, {
-        pointToLayer: wifispotsPointToLayer,
-        onEachFeature: wifispotsClick
+//below pointToLayer is  a leaflet specific function or variable
+    wifiSpotsGeoJSON = L.geoJson(wifiSpots, {
+        pointToLayer: wifiSpotPointToLayer,
+        onEachFeature: wifiSpotsClick
     });
 
- /*
     addNeighborhoodData();
   });
 }
 
 // let's add neighborhood data and show population density
-function addNeighborhoodData(); {
+function addNeighborhoodData() {
 $.getJSON( "geojson/NYC_neighborhood_data.geojson", function( data ) {
     // ensure jQuery has pulled all data out of the geojson file
-    var neighborhoods = data;
+    var neighborhoodData = data;
 //CHORLOPLETH 
 //this is a loop
     // neighborhood choropleth map
@@ -202,7 +198,7 @@ $.getJSON( "geojson/NYC_neighborhood_data.geojson", function( data ) {
             weight: 1,
             opacity: .1,
             color: 'white',
-            fillOpacity: 0.75,
+            fillOpacity: 0.2,
             fillColor: fillColor
         };
 // return --this tells computer to display style
@@ -211,13 +207,12 @@ $.getJSON( "geojson/NYC_neighborhood_data.geojson", function( data ) {
 
     var populationClick = function (feature, layer) {
         // let's bind some feature properties to a pop up
-        layer.bindPopup("<strong>Neighborhood:</strong> " + feature.properties.NYC_NEIG + "<br /><strong>Population</strong>" + percent + "%");
+        layer.bindPopup("<strong>Neighborhood:</strong> " + feature.properties.NYC_NEIG + "<br /><strong>Population</strong>" + feature.properties.Pop);
     }
 //This is a loop below: We've used one for each layer
-    neighborhoodsGeoJSON = L.geoJson(neighborhoods, {
-        style: povertyStyle,
+    neighborhoodDataGeoJSON = L.geoJson(neighborhoodData, {
+        style: populationStyle,
         onEachFeature: populationClick
-     */ 
     });
 
      // now lets add the data to the map in the order that we want it to appear
@@ -225,13 +220,13 @@ $.getJSON( "geojson/NYC_neighborhood_data.geojson", function( data ) {
         floodZonesGeoJSON.addTo(map);
 
         // neighborhoods: leave this off for now
-       // neighborhoodsGeoJSON.addTo(map);
+       neighborhoodDataGeoJSON.addTo(map);
 
         // subway lines next
         subwayLinesGeoJSON.addTo(map);
 
         // the wifi spots last
-        wifispotsGeoJSON.addTo(map);
+        wifiSpotsGeoJSON.addTo(map);
 
 
         // now create the layer controls!
@@ -251,10 +246,10 @@ function createLayerControls(){
     };
 
     var overlayMaps = {
-       // "Neighborhood Population": neighborhoodsGeoJSON,
+       "Neighborhood Population": neighborhoodDataGeoJSON,
         "Hurricane Evacuation Zones": floodZonesGeoJSON,
         "Subway Lines": subwayLinesGeoJSON,
-        "Wifi Spots": wifispotsGeoJSON
+        "Wifi Spots": wifiSpotsGeoJSON
     };
 
     // add control
